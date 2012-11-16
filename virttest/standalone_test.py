@@ -1,6 +1,7 @@
-import os, logging, imp, sys, time, traceback
+import os, logging, imp, sys, time, traceback, resource
 from autotest.client.shared import error
 from autotest.client import utils
+from autotest.client import os_dep
 import utils_misc, env_process
 
 
@@ -37,7 +38,92 @@ class Test(object):
         self.resultsdir = None
         self.logfile = None
         self.file_handler = None
+        self.configure_crash_handler()
 
+    def configure_crash_handler(self):
+        """
+        Configure the crash handler by:
+         * Setting up core size to unlimited
+         * Putting an appropriate crash handler on /proc/sys/kernel/core_pattern
+         * Create files that the crash handler will use to figure which tests
+           are active at a given moment
+
+        The crash handler will pick up the core file and write it to
+        self.debugdir, and perform analysis on it to generate a report. The
+        program also outputs some results to syslog.
+
+        If multiple tests are running, an attempt to verify if we still have
+        the old PID on the system process table to determine whether it is a
+        parent of the current test execution. If we can't determine it, the
+        core file and the report file will be copied to all test debug dirs.
+        """
+        self.crash_handling_enabled = True
+
+        logging.info('Configuring crash_handler')
+        # make sure this script will run with a new enough python to work
+        cmd = ("python -c 'import sys; "
+               "print sys.version_info[0], sys.version_info[1]'")
+        result = utils.run(cmd, ignore_status=True, verbose=False)
+        if result.exit_status != 0:
+            logging.warning('System python is too old, crash handling disabled')
+            return
+        major, minor = [int(x) for x in result.stdout.strip().split()]
+        if (major, minor) < (2, 4):
+            logging.warning('System python is too old, crash handling disabled')
+            return
+
+        try:
+            self.autodir = os.path.abspath(os.environ['AUTODIR'])
+        except KeyError:
+            self.autodir = os.path.abspath('/opt/extra/vliaskov/devel/autotest/client')
+
+        self.pattern_file = '/proc/sys/kernel/core_pattern'
+        try:
+            # Enable core dumps
+            resource.setrlimit(resource.RLIMIT_CORE, (-1, -1))
+            # Trying to backup core pattern and register our script
+            self.core_pattern_backup = open(self.pattern_file, 'r').read()
+            pattern_file = open(self.pattern_file, 'w')
+            tools_dir = os.path.join(self.autodir, 'tools')
+            crash_handler_path = os.path.join(tools_dir, 'crash_handler.py')
+            pattern_file.write('|' + crash_handler_path + ' %p %t %u %s %h %e')
+            # Writing the files that the crash handler is going to use
+            self.debugdir_tmp_file = ('/tmp/autotest_results_dir.%s' %
+                                      os.getpid())
+            utils.open_write_close(self.debugdir_tmp_file, self.debugdir + "\n")
+        except Exception, e:
+            logging.warning('Crash handling disabled: %s', e)
+        else:
+            self.crash_handling_enabled = True
+            try:
+                os_dep.command('gdb')
+            except ValueError:
+                logging.warning('Could not find GDB installed. Crash handling '
+                                'will operate with limited functionality')
+            logging.warning('Crash handling enabled')
+
+    def crash_handler_report(self):
+        """
+        If core dumps are found on the debugdir after the execution of the
+        test, let the user know.
+        """
+        logging.warning('Crash handling report in %s', self.debugdir)
+        if self.crash_handling_enabled:
+            # Remove the debugdir info file
+            os.unlink(self.debugdir_tmp_file)
+            # Restore the core pattern backup
+            try:
+                utils.open_write_close(self.pattern_file,
+                                       self.core_pattern_backup)
+            except EnvironmentError:
+                pass
+            # Let the user know if core dumps were generated during the test
+            core_dirs = glob.glob('%s/crash.*' % self.debugdir)
+            logging.warning('Crash handling report in %s', core_dir)
+            if core_dirs:
+                logging.warning('Programs crashed during test execution')
+                for dir in core_dirs:
+                    logging.warning('Please verify %s for more info', dir)
 
     def set_debugdir(self, debugdir):
         self.debugdir = os.path.join(debugdir, self.tag)
@@ -140,6 +226,7 @@ class Test(object):
                             run_func(self, params, env)
                         finally:
                             env.save()
+                        self.crash_handler_report()
                     test_passed = True
 
                 except Exception, e:
