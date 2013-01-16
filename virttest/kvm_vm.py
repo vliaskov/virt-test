@@ -2792,3 +2792,19 @@ class VM(virt_vm.BaseVM):
             current_file = None
 
         return current_file
+
+    def hotplug_disk(self, **params):
+        """
+        Convenience method wrapper for add_disk() and add_drive().
+
+        @return: dict-like object containing disks's details
+        """
+        """
+        disk = Disk()
+        drive = self.add_drive(**params)
+        nic_name = self.add_disk(**params)["nic_name"]
+        self.activate_netdev(nic_name)
+        self.activate_disk(nic_name)
+        return self.virtnet[nic_name]
+        """
+

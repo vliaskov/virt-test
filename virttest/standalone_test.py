@@ -1,4 +1,4 @@
-import os, logging, imp, sys, time, traceback, resource
+import os, logging, imp, sys, time, traceback, resource, glob
 from autotest.client.shared import error
 from autotest.client import utils
 from autotest.client import os_dep
@@ -110,16 +110,15 @@ class Test(object):
         logging.warning('Crash handling report in %s', self.debugdir)
         if self.crash_handling_enabled:
             # Remove the debugdir info file
-            os.unlink(self.debugdir_tmp_file)
-            # Restore the core pattern backup
             try:
+                os.unlink(self.debugdir_tmp_file)
                 utils.open_write_close(self.pattern_file,
                                        self.core_pattern_backup)
             except EnvironmentError:
                 pass
+
             # Let the user know if core dumps were generated during the test
             core_dirs = glob.glob('%s/crash.*' % self.debugdir)
-            logging.warning('Crash handling report in %s', core_dir)
             if core_dirs:
                 logging.warning('Programs crashed during test execution')
                 for dir in core_dirs:
