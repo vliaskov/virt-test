@@ -58,6 +58,8 @@ class Test(object):
         core file and the report file will be copied to all test debug dirs.
         """
         self.crash_handling_enabled = True
+        self.debugdir_tmp_file = ('/tmp/autotest_results_dir.%s' %
+                                      os.getpid())
 
         logging.info('Configuring crash_handler')
         # make sure this script will run with a new enough python to work
@@ -88,8 +90,7 @@ class Test(object):
             crash_handler_path = os.path.join(tools_dir, 'crash_handler.py')
             pattern_file.write('|' + crash_handler_path + ' %p %t %u %s %h %e')
             # Writing the files that the crash handler is going to use
-            self.debugdir_tmp_file = ('/tmp/autotest_results_dir.%s' %
-                                      os.getpid())
+
             utils.open_write_close(self.debugdir_tmp_file, self.debugdir + "\n")
         except Exception, e:
             logging.warning('Crash handling disabled: %s', e)

@@ -25,7 +25,13 @@ def run_cpu_hotplug(test, params, env):
     session = vm.wait_for_login(timeout=timeout)
 
     n_cpus_add = int(params.get("n_cpus_add", 1))
+
     current_cpus = int(params.get("smp", 1))
+    output = vm.monitor.cmd("info cpus")
+    logging.debug("Output of info cpus:\n%s", output)
+    cpu_regexp = re.compile("CPU #(\d+)")
+    current_cpus = len(cpu_regexp.findall(output))
+
     onoff_iterations = int(params.get("onoff_iterations", 20))
     total_cpus = current_cpus + n_cpus_add
 
@@ -33,7 +39,7 @@ def run_cpu_hotplug(test, params, env):
     session.cmd("dmesg -c")
 
     error.context("Adding %d CPUs to guest" % n_cpus_add)
-    for i in range(total_cpus):
+    for i in range(current_cpus, total_cpus):
         vm.monitor.cmd("cpu_set %s online" % i)
 
     output = vm.monitor.cmd("info cpus")
