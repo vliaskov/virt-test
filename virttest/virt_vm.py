@@ -513,16 +513,16 @@ class BaseVM(object):
             arp_ip = self.address_cache.get(nic.mac.upper())
             if not arp_ip:
                 arp_ip = self.address_cache.get(nic.mac.lower())
-            if not arp_ip:
-                raise VMIPAddressMissingError(nic.mac)
+            #if not arp_ip:
+            #    raise VMIPAddressMissingError(nic.mac)
             # Make sure the IP address is assigned to one or more macs
             # for this guest
             macs = self.virtnet.mac_list()
 
-            if not utils_misc.verify_ip_address_ownership(arp_ip, macs):
-                raise VMAddressVerificationError(nic.mac, arp_ip)
-            logging.debug('Found/Verified IP %s for VM %s NIC %s' % (
-                            arp_ip, self.name, str(index)))
+            #if not utils_misc.verify_ip_address_ownership(arp_ip, macs):
+            #    raise VMAddressVerificationError(nic.mac, arp_ip)
+            #logging.debug('Found/Verified IP %s for VM %s NIC %s' % (
+            #                arp_ip, self.name, str(index)))
             return arp_ip
 
 

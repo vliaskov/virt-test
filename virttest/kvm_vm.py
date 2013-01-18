@@ -410,6 +410,7 @@ class VM(virt_vm.BaseVM):
 
         def add_smp(hlp):
             smp_str = " -smp %d" % self.cpuinfo.smp
+            #if has_option(hlp, "maxcpus=cpus"):
             smp_str += ",maxcpus=%d" % self.cpuinfo.maxcpus
             smp_str += ",cores=%d" % self.cpuinfo.cores
             smp_str += ",threads=%d" % self.cpuinfo.threads
@@ -1111,10 +1112,11 @@ class VM(virt_vm.BaseVM):
                 tftp = None
             nettype = nic.get("nettype", "bridge")
             # don't force conversion of add_nic()/add_net() optional parameter
-            if nic.has_key('tapfd'):
-                tapfd = int(nic.tapfd)
-            else:
-                tapfd = None
+            #if nic.has_key('tapfd'):
+            #    tapfd = int(nic.tapfd)
+            #else:
+            #    tapfd = None
+            tapfd = None
             ifname = nic.get('ifname')
             # Handle the '-net nic' part
             qemu_cmd += add_nic(hlp, vlan, nic_model, mac,
