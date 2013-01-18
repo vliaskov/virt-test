@@ -101,9 +101,9 @@ def run_cpu_hotplug(test, params, env):
                                 "cpu_hotplug.control")
 
     timeout = int(params.get("cpu_hotplug_timeout"), 300)
-    error.context("running cpu_hotplug autotest after cpu addition")
-    utils_test.run_autotest(vm, session, control_path, timeout,
-                                 test.outputdir, params)
+    #error.context("running cpu_hotplug autotest after cpu addition")
+    #utils_test.run_autotest(vm, session, control_path, timeout,
+    #                             test.outputdir, params)
 
     # Last, but not least, let's offline/online the CPUs in the guest
     # several times

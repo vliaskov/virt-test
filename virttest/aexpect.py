@@ -1245,6 +1245,9 @@ class ShellSession(Expect):
             else:
                 raise ShellError(cmd, o)
 
+        logging.debug("Output '%s'", o)
+        # logging.debug("processed Output '%s'",
+        # remove_last_nonempty_line(remove_command_echo(o, cmd)))
         # Remove the echoed command and the final shell prompt
         return remove_last_nonempty_line(remove_command_echo(o, cmd))
 
