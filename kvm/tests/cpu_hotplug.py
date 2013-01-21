@@ -74,7 +74,10 @@ def run_cpu_hotplug(test, params, env):
     r_cmd = 'find /sys/devices/system/cpu/cpu[1-99]/online -maxdepth 0 -type f'
     online_files = session.cmd(r_cmd)
     logging.debug("CPU online files detected: %s", online_files)
-    online_files = online_files.split().sort()
+    online_files = online_files.split()
+    online_files.sort()
+
+    logging.debug("CPU online files detected: %s", online_files)
 
     if not online_files:
         raise error.TestFail("Could not find CPUs that can be "
@@ -100,7 +103,7 @@ def run_cpu_hotplug(test, params, env):
     control_path = os.path.join(test.virtdir, "autotest_control",
                                 "cpu_hotplug.control")
 
-    timeout = int(params.get("cpu_hotplug_timeout"), 300)
+    timeout = int(params.get("cpu_hotplug_timeout"), 20)
     #error.context("running cpu_hotplug autotest after cpu addition")
     #utils_test.run_autotest(vm, session, control_path, timeout,
     #                             test.outputdir, params)

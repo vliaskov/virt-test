@@ -1224,8 +1224,7 @@ class ShellSession(Expect):
         @raise ShellError: Raised if an unknown error occurs
         """
         def remove_command_echo(str, cmd):
-            if str and str.splitlines()[0] == cmd:
-                str = "".join(str.splitlines(True)[1:])
+            str = "".join(str.splitlines(True)[1:])
             return str
 
         def remove_last_nonempty_line(str):
